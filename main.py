@@ -66,7 +66,8 @@ def send_welcome(message):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
     button_email = types.KeyboardButton("إنشاء إيميل")
     button_list_emails = types.KeyboardButton("عرض الإيميلات")
-    markup.add(button_email, button_list_emails)
+    button_fetch_messages = types.KeyboardButton("جلب الرسائل")
+    markup.add(button_email, button_list_emails, button_fetch_messages)
     bot.send_message(message.chat.id, "[𝗦𝗖 𝗙𝗮𝗸𝗲 𝗠𝗮𝗶𝗹 📮](https://t.me/Scorpion_scorp)\n\n*✎┊‌ مرحبا بك في بوت الايميلات الوهمية 👋🏻*\n\n*للحصول على ايميل اضغط على انشاء ايميل ✍🏻* \n\n* تم تطوير البوت بواسطة :* \n*المطور* [𝗠𝗼𝗵𝗮𝗺𝗲𝗱](t.me/Zo_r0) \n*المطور* [𝗔𝗹𝗹𝗼𝘂𝘀𝗵](t.me/I_e_e_l)", reply_markup=markup, parse_mode='Markdown', disable_web_page_preview=True)
 
 # عرض قائمة الإيميلات
@@ -108,7 +109,7 @@ def send_fake_email(message):
     loading_message = bot.send_message(chat_id, "*✎┊‌ 𝗚𝗲𝘁𝘁𝗶𝗻𝗴 𝗲𝗺𝗮𝗶𝗹 📥  | 10%*\n\n[ ▀▀────────────────── ]", parse_mode='Markdown')
 
     for percent in range(20, 101, 10):
-        time.sleep(1)
+        time.sleep(0.75)
         progress_bar = "▀▀" * (percent // 10) + "──" * (10 - percent // 10)
         bot.edit_message_text(
             text=f"*✎┊‌ 𝗚𝗲𝘁𝘁𝗶𝗻𝗴 𝗲𝗺𝗮𝗶𝗹 📥  | {percent}%*\n\n[ {progress_bar} ]",
@@ -129,5 +130,26 @@ def send_fake_email(message):
     email_thread.daemon = True
     email_thread.start()
 
+# جلب الرسائل عند الضغط على الزر
+@bot.message_handler(func=lambda message: message.text == "جلب الرسائل")
+def fetch_messages(message):
+    chat_id = message.chat.id
+    email = user_emails.get(chat_id)
+    if email:
+        messages = get_messages_from_email(email)
+        if messages:
+            for msg in messages:
+                message_id = msg['id']
+                if message_id not in user_messages.get(chat_id, []):
+                    full_message = get_message_content(email, message_id)
+                    body = full_message.get('textBody') or html_to_text(full_message.get('htmlBody', '✎┊‌ الرسالة فارغه'))
+                    bot.send_message(chat_id, body)
+                    user_messages.setdefault(chat_id, []).append(message_id)
+        else:
+            bot.send_message(chat_id, "*✎┊‌ لا توجد رسائل جديدة.*", parse_mode='Markdown')
+    else:
+        bot.send_message(chat_id, "*✎┊‌ يرجى إنشاء إيميل أولاً.*", parse_mode='Markdown')
+
 # تشغيل البوت
 bot.infinity_polling()
+            
