@@ -39,27 +39,6 @@ def html_to_text(html):
     soup = BeautifulSoup(html, "html.parser")
     return soup.get_text()
 
-# دالة لمراقبة البريد الإلكتروني للمستخدم
-def check_for_new_messages(chat_id, email):
-    while True:
-        messages = get_messages_from_email(email)
-        if messages:
-            for msg in messages:
-                message_id = msg['id']
-                if chat_id not in user_messages:
-                    user_messages[chat_id] = []
-                if message_id not in user_messages[chat_id]:
-                    full_message = get_message_content(email, message_id)
-                    body = full_message.get('textBody')
-                    if not body:
-                        body = full_message.get('htmlBody', '✎┊‌ الرسالة فارغه')
-                        if body != '✎┊‌ الرسالة فارغه':
-                            body = html_to_text(body)
-
-                    bot.send_message(chat_id, body)
-                    user_messages[chat_id].append(message_id)
-        time.sleep(10)
-
 # عند بدء المحادثة مع البوت
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
@@ -124,11 +103,7 @@ def send_fake_email(message):
     if chat_id not in user_email_list:
         user_email_list[chat_id] = []
     user_email_list[chat_id].append(email)
-    bot.reply_to(message, f"*✎┊‌ إيميل وهمي تم إنشاؤه ✅\n\nإضغط للنسخ [* `{email}` *]\n\n✎┊‌ عزيزي اي طلب او رسالة تجي عل ايميل راح تندز مباشرة مراح تحتاج جلب رسالة وغيرها *", parse_mode='Markdown')
-    
-    email_thread = threading.Thread(target=check_for_new_messages, args=(chat_id, email))
-    email_thread.daemon = True
-    email_thread.start()
+    bot.reply_to(message, f"*✎┊‌ إيميل وهمي تم إنشاؤه ✅\n\nإضغط للنسخ [* `{email}` *]\n\n✎┊‌ عزيزي اي طلب او رسالة تجي عل ايميل راح تندز مباشرة بس تضغط على [جلب الرسالة]*", parse_mode='Markdown')
 
 # جلب الرسائل عند الضغط على الزر
 @bot.message_handler(func=lambda message: message.text == "جلب الرسائل")
@@ -152,4 +127,4 @@ def fetch_messages(message):
 
 # تشغيل البوت
 bot.infinity_polling()
-            
+                         
